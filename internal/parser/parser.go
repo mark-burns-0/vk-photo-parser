@@ -2,12 +2,14 @@ package parser
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/k0kubun/pp"
+	"github.com/mark-burns-0/vk-photo-parser/internal/pool"
 )
 
 const (
@@ -86,6 +88,20 @@ func (p *Parser) ParsePhoto() *Parser {
 		body["offset"] = strconv.Itoa(offset)
 	}
 	pp.Print(len(allResponses))
+
+	pl := pool.NewPool(4, func(num int, data VKPhotosResponse) error {
+		fmt.Println(num, len(data.Response.Items))
+
+		return nil
+	})
+	pl.Create()
+
+	for _, response := range allResponses {
+		pl.Handle(response)
+	}
+	pl.Wait()
+	pl.Stats()
+
 	return p
 }
 
