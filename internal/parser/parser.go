@@ -2,9 +2,7 @@ package parser
 
 import (
 	"log/slog"
-	"net/http"
-
-	"github.com/mark-burns-0/vk-photo-parser/pkg/transport"
+	"os"
 )
 
 type Configer interface {
@@ -14,27 +12,23 @@ type Configer interface {
 	GetVersion() string
 }
 
-func New(cfg Configer) *Parser {
+func New(cfg Configer, logLvl slog.Level) *Parser {
+	client := newClient(
+		slog.New(
+			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+				Level: logLvl,
+			}),
+		),
+	)
 
-	return &Parser{}
-}
-
-func newClient(log *slog.Logger) *ParserClient {
-	tr := transport.NewTransportBuilder(nil).
-		WithMiddlewares(
-			transport.WithLogging(log),
-			transport.WithRetry(3),
-		).
-		Build()
-
-	return &ParserClient{
-		client: &http.Client{
-			Transport: tr,
-		},
+	return &Parser{
+		client: client,
 	}
 }
 
 func (p *Parser) Parse() *Parser {
+	p.client.Post("https://api.vk.com/method/photos.get", nil)
+
 	return p
 }
 
