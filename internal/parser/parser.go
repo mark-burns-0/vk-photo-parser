@@ -10,6 +10,15 @@ import (
 	"github.com/k0kubun/pp"
 )
 
+const (
+	photosGetMethod = "photos.get"
+)
+
+const (
+	offsetStep = 100
+	countStep  = 100
+)
+
 type Configer interface {
 	GetOwnerID() string
 	GetAlbumID() string
@@ -41,7 +50,7 @@ func (p *Parser) ParsePhoto() *Parser {
 	var err error
 	var r *http.Response
 	offset := 0
-	count := 100
+	count := countStep
 
 	body := map[string]string{
 		"owner_id":     p.cfg.GetOwnerID(),
@@ -55,7 +64,7 @@ func (p *Parser) ParsePhoto() *Parser {
 	allResponses := []VKPhotosResponse{}
 
 	for {
-		r, err = p.client.Post("photos.get", body)
+		r, err = p.client.Post(photosGetMethod, body)
 		if err != nil {
 			slog.Error("Failed to get photos", "error", err, "operation", op)
 			break
