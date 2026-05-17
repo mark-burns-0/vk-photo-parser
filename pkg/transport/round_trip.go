@@ -76,8 +76,9 @@ func WithRetry(retries int, afterMilliseconds int) Middleware {
 	return func(next http.RoundTripper) http.RoundTripper {
 		return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			var err error
+			var resp *http.Response
 			for i := range retries {
-				resp, err := next.RoundTrip(req)
+				resp, err = next.RoundTrip(req)
 				if err == nil {
 					return resp, nil
 				}
