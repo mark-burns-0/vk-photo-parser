@@ -69,7 +69,12 @@ func (p *Parser) ParsePhoto() *Parser {
 			slog.Error("Failed to get photos", "error", err, "operation", op)
 			break
 		}
-		json.NewDecoder(r.Body).Decode(&resp)
+		err = json.NewDecoder(r.Body).Decode(&resp)
+		if err != nil {
+			r.Body.Close()
+			slog.Error("Failed to decode body", "error", err, "operation", op)
+			break
+		}
 		r.Body.Close()
 
 		if len(resp.Response.Items) == 0 {

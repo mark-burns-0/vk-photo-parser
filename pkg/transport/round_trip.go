@@ -3,6 +3,7 @@ package transport
 import (
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 type Middleware func(http.RoundTripper) http.RoundTripper
@@ -71,7 +72,7 @@ func WithLogging(logger *slog.Logger) Middleware {
 	}
 }
 
-func WithRetry(retries int) Middleware {
+func WithRetry(retries int, retryAfterMilliseconds time.Duration) Middleware {
 	return func(next http.RoundTripper) http.RoundTripper {
 		return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			var err error
@@ -80,6 +81,7 @@ func WithRetry(retries int) Middleware {
 				if err == nil {
 					return resp, nil
 				}
+				time.Sleep(retryAfterMilliseconds)
 			}
 			return nil, err
 		})
