@@ -35,13 +35,10 @@ type Configer interface {
 	GetOutputFolder() string
 }
 
-func New(cfg Configer, logLvl slog.Level) *Parser {
+func New(cfg Configer) *Parser {
+
 	client := newClient(
-		slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-				Level: logLvl,
-			}),
-		),
+		slog.Default(),
 		cfg.GetBaseURL(),
 	)
 
