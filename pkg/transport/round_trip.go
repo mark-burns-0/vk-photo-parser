@@ -72,16 +72,16 @@ func WithLogging(logger *slog.Logger) Middleware {
 	}
 }
 
-func WithRetry(retries int, retryAfterMilliseconds time.Duration) Middleware {
+func WithRetry(retries int, afterMilliseconds int) Middleware {
 	return func(next http.RoundTripper) http.RoundTripper {
 		return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			var err error
-			for range retries {
+			for i := range retries {
 				resp, err := next.RoundTrip(req)
 				if err == nil {
 					return resp, nil
 				}
-				time.Sleep(retryAfterMilliseconds)
+				time.Sleep(time.Duration(i*afterMilliseconds) * time.Millisecond)
 			}
 			return nil, err
 		})

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	url_ "net/url"
 	"strings"
-	"time"
 
 	"github.com/mark-burns-0/vk-photo-parser/pkg/transport"
 )
@@ -14,7 +13,7 @@ func newClient(log *slog.Logger, baseURL string) *ParserClient {
 	tr := transport.NewTransportBuilder(nil).
 		WithMiddlewares(
 			transport.WithLogging(log),
-			transport.WithRetry(3, 100*time.Millisecond),
+			transport.WithRetry(3, 100),
 			transport.WithHeader(map[string]string{
 				"Accept":       "application/json",
 				"Content-Type": "application/json",
