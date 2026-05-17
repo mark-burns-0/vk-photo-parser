@@ -8,6 +8,6 @@ import (
 
 func Run(config parser.Configer) {
 	pr := parser.New(config, slog.LevelDebug)
-	pr.Parse().
+	pr.ParsePhoto().
 		Download()
 }
