@@ -6,12 +6,13 @@ import (
 )
 
 type Config struct {
-	Token    string `env:"VK_TOKEN"`
-	AlbumID  string `env:"VK_ALBUM_ID"`
-	OwnerID  string `env:"VK_OWNER_ID"`
-	Version  string `env:"VK_API_VERSION" env-default:"5.131"`
-	BaseURL  string `env:"VK_API_BASE_URL" env-default:"https://api.vk.com/method/"`
-	LogLevel string `env:"LOG_LEVEL" env-default:"8"` // default to error level
+	Token        string `env:"VK_TOKEN"`
+	AlbumID      string `env:"VK_ALBUM_ID"`
+	OwnerID      string `env:"VK_OWNER_ID"`
+	Version      string `env:"VK_API_VERSION" env-default:"5.131"`
+	BaseURL      string `env:"VK_API_BASE_URL" env-default:"https://api.vk.com/method/"`
+	LogLevel     string `env:"LOG_LEVEL" env-default:"8"` // default to error level
+	OutputFolder string `env:"OUTPUT_FOLDER" env-default:"photos"`
 }
 
 func (c *Config) GetOwnerID() string {
@@ -40,4 +41,8 @@ func (c *Config) GetLogLevel() slog.Level {
 		return slog.LevelInfo
 	}
 	return slog.Level(rawString)
+}
+
+func (c *Config) GetOutputFolder() string {
+	return c.OutputFolder
 }
