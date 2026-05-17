@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mark-burns-0/vk-photo-parser/internal/pool"
 )
 
@@ -19,8 +20,9 @@ const (
 )
 
 const (
-	offsetStep = 100
-	countStep  = 100
+	offsetStep      = 100
+	countStep       = 100
+	amountOfWorkers = 6
 )
 
 type Configer interface {
@@ -100,7 +102,7 @@ func (p *Parser) ParsePhoto() *Parser {
 }
 
 func (p *Parser) Download() *Parser {
-	pl := pool.NewPool(10, func(num int, url string) error {
+	pl := pool.NewPool(amountOfWorkers, func(num int, url string) error {
 		err := os.MkdirAll(filepath.Join(
 			p.cfg.GetOutputFolder(),
 			time.Now().Format("2006-01-02")),
@@ -113,7 +115,11 @@ func (p *Parser) Download() *Parser {
 		out, err := os.Create(filepath.Join(
 			p.cfg.GetOutputFolder(),
 			time.Now().Format("2006-01-02"),
-			fmt.Sprintf("%s.jpg", time.Now().Format("2006-01-02_15-04-05")),
+			fmt.Sprintf(
+				"%s_%s.jpg",
+				time.Now().Format("2006-01-02_15-04-05"),
+				uuid.New().String(),
+			),
 		))
 		if err != nil {
 			return err
@@ -127,7 +133,7 @@ func (p *Parser) Download() *Parser {
 		defer resp.Body.Close()
 
 		_, err = io.Copy(out, resp.Body)
-		time.Sleep(time.Duration(100) * time.Millisecond)
+		time.Sleep(time.Duration(300) * time.Millisecond)
 		return nil
 	})
 	pl.Create()
