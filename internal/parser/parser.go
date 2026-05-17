@@ -16,6 +16,7 @@ type Configer interface {
 	GetVersion() string
 	GetBaseURL() string
 	GetToken() string
+	GetLogLevel() slog.Level
 }
 
 func New(cfg Configer, logLvl slog.Level) *Parser {
