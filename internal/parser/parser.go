@@ -102,19 +102,24 @@ func (p *Parser) ParsePhoto() *Parser {
 }
 
 func (p *Parser) Download() *Parser {
-	pl := pool.NewPool(amountOfWorkers, func(num int, url string) error {
-		err := os.MkdirAll(filepath.Join(
+	path := fmt.Sprintf("%s_%s", time.Now().Format("2006-01-02"), uuid.New().String())
+	err := os.MkdirAll(
+		filepath.Join(
 			p.cfg.GetOutputFolder(),
-			time.Now().Format("2006-01-02")),
-			0755,
-		)
-		if err != nil {
-			return err
-		}
+			path,
+		),
+		0755,
+	)
+	if err != nil {
+		slog.Error("Failed to create output folder", "error", err, "operation", "parser.Download")
+		return p
+	}
+
+	pl := pool.NewPool(amountOfWorkers, func(num int, url string) error {
 
 		out, err := os.Create(filepath.Join(
 			p.cfg.GetOutputFolder(),
-			time.Now().Format("2006-01-02"),
+			path,
 			fmt.Sprintf(
 				"%s_%s.jpg",
 				time.Now().Format("2006-01-02_15-04-05"),
