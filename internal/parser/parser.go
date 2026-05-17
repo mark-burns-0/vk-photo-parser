@@ -3,12 +3,14 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 
-	"github.com/k0kubun/pp"
 	"github.com/mark-burns-0/vk-photo-parser/internal/pool"
 )
 
@@ -28,6 +30,7 @@ type Configer interface {
 	GetBaseURL() string
 	GetToken() string
 	GetLogLevel() slog.Level
+	GetOutputFolder() string
 }
 
 func New(cfg Configer, logLvl slog.Level) *Parser {
@@ -63,7 +66,6 @@ func (p *Parser) ParsePhoto() *Parser {
 		"v":            p.cfg.GetVersion(),
 	}
 	resp := &VKPhotosResponse{}
-	allResponses := []VKPhotosResponse{}
 
 	for {
 		r, err = p.client.Post(photosGetMethod, body)
@@ -82,22 +84,56 @@ func (p *Parser) ParsePhoto() *Parser {
 		if len(resp.Response.Items) == 0 {
 			break
 		}
-		allResponses = append(allResponses, *resp)
+
+		urls, err := extractBaseUrls(resp.Response.Items)
+		if err != nil {
+			slog.Error("Failed to extract base urls from items", "error", err, "operation", op)
+		} else {
+			p.urls = append(p.urls, urls...)
+		}
 
 		offset += count
 		body["offset"] = strconv.Itoa(offset)
 	}
-	pp.Print(len(allResponses))
 
-	pl := pool.NewPool(4, func(num int, data VKPhotosResponse) error {
-		fmt.Println(num, len(data.Response.Items))
+	return p
+}
 
+func (p *Parser) Download() *Parser {
+	pl := pool.NewPool(10, func(num int, url string) error {
+		err := os.MkdirAll(filepath.Join(
+			p.cfg.GetOutputFolder(),
+			time.Now().Format("2006-01-02")),
+			0755,
+		)
+		if err != nil {
+			return err
+		}
+
+		out, err := os.Create(filepath.Join(
+			p.cfg.GetOutputFolder(),
+			time.Now().Format("2006-01-02"),
+			fmt.Sprintf("%s.jpg", time.Now().Format("2006-01-02_15-04-05")),
+		))
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		resp, err := p.client.Get(url)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		_, err = io.Copy(out, resp.Body)
+		time.Sleep(time.Duration(100) * time.Millisecond)
 		return nil
 	})
 	pl.Create()
 
-	for _, response := range allResponses {
-		pl.Handle(response)
+	for _, url := range p.urls {
+		pl.Handle(url)
 	}
 	pl.Wait()
 	pl.Stats()
@@ -105,6 +141,22 @@ func (p *Parser) ParsePhoto() *Parser {
 	return p
 }
 
-func (p *Parser) Download() *Parser {
-	return p
+func extractBaseUrls(data []VKPhotoItem) ([]string, error) {
+	var op = "parser.extractBaseUrls"
+
+	urls := make([]string, 0, len(data))
+
+	for _, d := range data {
+		for _, size := range d.Sizes {
+			if size.Type == "base" {
+				urls = append(urls, size.URL)
+			}
+		}
+	}
+
+	if len(urls) == 0 {
+		return nil, fmt.Errorf("%s: %s", op, "exctracted nothing")
+	}
+
+	return urls, nil
 }

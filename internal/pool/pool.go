@@ -1,6 +1,9 @@
 package pool
 
-import "fmt"
+import (
+	"fmt"
+	"log/slog"
+)
 
 type Pool[Data any] struct {
 	poolSize int
@@ -26,11 +29,13 @@ func (pl *Pool[Data]) Create() {
 }
 
 func (pl *Pool[Data]) Handle(data Data) {
+	op := "pool.Handle"
 	w := <-pl.pool
 
 	go func() {
 		if err := pl.handler(w.id, data); err != nil {
 			w.failed++
+			slog.Error("Failed to processing", "error", err, "operation", op)
 		} else {
 			w.completed++
 		}

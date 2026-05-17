@@ -15,12 +15,14 @@ type ParserClient struct {
 
 type VKPhotosResponse struct {
 	Response struct {
-		Count int `json:"count"`
-		Items []struct {
-			Sizes []struct {
-				Type string `json:"type"`
-				URL  string `json:"url"`
-			} `json:"sizes"`
-		} `json:"items"`
+		Count int           `json:"count"`
+		Items []VKPhotoItem `json:"items"`
 	} `json:"response"`
+}
+
+type VKPhotoItem struct {
+	Sizes []struct {
+		Type string `json:"type"`
+		URL  string `json:"url"`
+	} `json:"sizes"`
 }

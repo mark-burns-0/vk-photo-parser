@@ -30,7 +30,7 @@ func newClient(log *slog.Logger, baseURL string) *ParserClient {
 }
 
 func (c *ParserClient) Get(url string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", c.baseURL+url, nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
